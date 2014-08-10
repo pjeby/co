@@ -33,9 +33,9 @@ suite('co()', function(){
   bench('thunks', function(done){
     co(function *(){
       yield setImmediate;
-      yield fun;
-      yield fun;
-      yield fun;
+      yield process.nextTick;
+      yield process.nextTick;
+      yield process.nextTick;
     })(done);
   })
 
