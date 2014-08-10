@@ -30,12 +30,12 @@ suite('co()', function(){
     })(done);
   })
 
-  bench('thunks', function(done){
+  bench('asynchronous thunks', function(done){
     co(function *(){
       yield setImmediate;
-      yield fun;
-      yield fun;
-      yield fun;
+      yield process.nexTick;
+      yield process.nexTick;
+      yield process.nexTick;
     })(done);
   })
 
