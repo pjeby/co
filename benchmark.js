@@ -1,7 +1,5 @@
 
 var co = require('./');
-var bluebird = require('bluebird');
-
 
 function fun(done) {
   done();
@@ -11,19 +9,46 @@ function *gen() {
 
 }
 
-function getPromise(val, err) {
-  return new bluebird(function (resolve, reject) {
-    if (err) reject(err);
-    else resolve(val);
-  });
+function thunkRunner(done) {
+    function runBench() {
+        var callback;
+        while (callback = done) {
+            done = null;
+            callback(null, thunk);
+        }  
+    }
+    function thunk(resume){
+        done = resume;
+    }
+    setImmediate(runBench);
 }
+
+function promiseRunner(done) {
+    function getPromise(val, err){
+        return {
+            then: function(error, resume) {
+                done = function() { resume(err,val); }
+            }
+        }
+    }
+    function runBench() {
+        var callback;
+        while (callback = done) {
+            done = null;
+            callback(null, getPromise);
+        }  
+    }
+    setImmediate(runBench);
+}
+
+
 
 suite('co()', function(){
   set('mintime', process.env.MINTIME | 0 || 2000)
 
   bench('promises', function(done){
     co(function *(){
-      yield setImmediate;
+      var getPromise = yield promiseRunner;
       yield getPromise(1);
       yield getPromise(2);
       yield getPromise(3);
@@ -32,10 +57,10 @@ suite('co()', function(){
 
   bench('async thunks', function(done){
     co(function *(){
-      yield setImmediate;
-      yield process.nextTick;
-      yield process.nextTick;
-      yield process.nextTick;
+      var thunk = yield thunkRunner;
+      yield thunk;
+      yield thunk;
+      yield thunk;
     })(done);
   })
 
